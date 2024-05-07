@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'Scanner.dart';
+import 'Scanner/Scanner.dart';
 import 'Token.dart';
 
 class Lox {

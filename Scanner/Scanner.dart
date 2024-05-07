@@ -1,6 +1,6 @@
-import 'Lox.dart';
-import 'Token.dart';
-import 'TokenType.dart';
+import '../Lox.dart';
+import '../Token.dart';
+import '../TokenType.dart';
 
 class Scanner {
   static final Map<String, TokenType> keywords = {
@@ -88,11 +88,14 @@ class Scanner {
         break;
       case '/':
         if (_match('/')) {
-          // Comment
-          while (_peek() != '\n' && !_isAtEnd()) _advance();
+          // Line comment
+          _lineComment();
+        } else if (_match('*')) {
+          _multiLineComment();
         } else {
           _addToken(TokenType.SLASH);
         }
+        break;
       case ' ':
       case '\r':
       case '\t':
@@ -114,6 +117,30 @@ class Scanner {
         }
         break;
     }
+  }
+
+  void _multiLineComment() {
+    // Block comment, supports recursive
+    var nestedCount = 1;
+    while (nestedCount > 0 && !_isAtEnd()) {
+      if (_match('*') && _match('/')) {
+        nestedCount--;
+      } else if (_match('/') && _match('*')) {
+        nestedCount++;
+      } else {
+        if (_peek() == '\n') {
+          _line++;
+        }
+        _advance();
+      }
+    }
+    if (nestedCount > 0) {
+      Lox.error(_line, "Unterminated block comment");
+    }
+  }
+
+  void _lineComment() {
+    while (_peek() != '\n' && !_isAtEnd()) _advance();
   }
 
   bool _isAtEnd() {
