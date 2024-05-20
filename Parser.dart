@@ -67,7 +67,25 @@ class Parser {
   }
 
   Expr _expression() {
-    return _ternary();
+    return _assignment();
+  }
+
+  Expr _assignment() {
+    Expr expression = _ternary();
+
+    if (_match([TokenType.EQUAL])) {
+      Token equals = _previous();
+      Expr value = _assignment();
+
+      if (expression is Variable) {
+        Token name = expression.name;
+        return Assign(name, value);
+      }
+
+      _error(equals, "Invalid assignment target.");
+    }
+
+    return expression;
   }
 
   Expr _ternary() {

@@ -15,4 +15,13 @@ class Environment {
 
     throw new RuntimeError(name, "Undefined variable '${name.lexeme}'.");
   }
+
+  void assign(Token name, Object? value) {
+    _values.update(
+      name.lexeme,
+      (_) => value,
+      ifAbsent: () =>
+          throw new RuntimeError(name, "Undefined variable '${name.lexeme}'."),
+    );
+  }
 }

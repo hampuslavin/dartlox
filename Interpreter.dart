@@ -180,4 +180,12 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
   Object? visitVariableExpr(Expr.Variable expr) {
     return _environment.get(expr.name);
   }
+
+  @override
+  Object? visitAssignExpr(Expr.Assign expr) {
+    Object? value = _evaluate(expr.value);
+    _environment.assign(expr.name, value);
+
+    return value;
+  }
 }
