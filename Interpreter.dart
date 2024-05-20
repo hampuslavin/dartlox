@@ -1,17 +1,26 @@
-import 'Expr.dart';
+import 'Environment.dart';
+import 'Expr.dart' as Expr;
+import 'Stmt.dart' as Stmt;
 import 'Lox.dart';
 import 'RuntimeError.dart';
 import 'Token.dart';
 import 'TokenType.dart';
 
-class Interpreter implements Visitor<Object?> {
-  Object? interpret(Expr expression) {
+class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
+  Environment _environment = new Environment();
+
+  Object? interpret(List<Stmt.Stmt> statements) {
     try {
-      Object? value = _evaluate(expression);
-      print(_stringify(value));
+      for (final stmt in statements) {
+        _execute(stmt);
+      }
     } on RuntimeError catch (error) {
       Lox.runtimeError(error);
     }
+  }
+
+  void _execute(Stmt.Stmt statement) {
+    statement.accept(this);
   }
 
   String _stringify(Object? object) {
@@ -29,7 +38,7 @@ class Interpreter implements Visitor<Object?> {
   }
 
   @override
-  Object? visitBinaryExpr(Binary expr) {
+  Object? visitBinaryExpr(Expr.Binary expr) {
     Object? left = _evaluate(expr.left);
     Object? right = _evaluate(expr.right);
 
@@ -39,21 +48,28 @@ class Interpreter implements Visitor<Object?> {
         return (left as double) - (right as double);
       case TokenType.SLASH:
         _checkNumberOperands(expr.operator, left, right);
+        if (right == 0) {
+          throw RuntimeError(expr.operator, "Division by zero not allowed.");
+        }
         return (left as double) / (right as double);
       case TokenType.STAR:
         _checkNumberOperands(expr.operator, left, right);
         return (left as double) * (right as double);
       case TokenType.PLUS:
         {
-          _checkNumberOperands(expr.operator, left, right);
           if (left is double && right is double) {
-            return (left) +
-                (right); // no difference in Dart between numbers and string addition
+            // no difference in Dart between numbers and string addition
+            return left + right;
           }
           if (left is String && right is String) {
-            return (left) + (right);
+            return "$left$right";
           }
-          break;
+          if ((left is String && right is double) ||
+              left is double && right is String) {
+            return "${_stringify(left)}${_stringify(right)}";
+          }
+          throw RuntimeError(
+              expr.operator, "Combination of operands not allowed.");
         }
       case TokenType.GREATER:
         _checkNumberOperands(expr.operator, left, right);
@@ -77,17 +93,17 @@ class Interpreter implements Visitor<Object?> {
   }
 
   @override
-  Object? visitGroupingExpr(Grouping expr) {
+  Object? visitGroupingExpr(Expr.Grouping expr) {
     return _evaluate(expr.expression);
   }
 
   @override
-  Object? visitLiteralExpr(Literal expr) {
+  Object? visitLiteralExpr(Expr.Literal expr) {
     return expr.value;
   }
 
   @override
-  Object? visitTernaryExpr(Ternary expr) {
+  Object? visitTernaryExpr(Expr.Ternary expr) {
     Object? condition = _evaluate(expr.condition);
     if (_isTruthy(condition)) {
       return _evaluate(expr.left);
@@ -97,7 +113,7 @@ class Interpreter implements Visitor<Object?> {
   }
 
   @override
-  Object? visitUnaryExpr(Unary expr) {
+  Object? visitUnaryExpr(Expr.Unary expr) {
     Object? right = _evaluate(expr.right);
 
     switch (expr.operator.type) {
@@ -110,7 +126,7 @@ class Interpreter implements Visitor<Object?> {
     }
   }
 
-  Object? _evaluate(Expr expr) {
+  Object? _evaluate(Expr.Expr expr) {
     return expr.accept(this);
   }
 
@@ -136,5 +152,32 @@ class Interpreter implements Visitor<Object?> {
   void _checkNumberOperands(Token operator, Object? left, Object? right) {
     if (left is double && right is double) return;
     throw RuntimeError(operator, "Operands must be a numbers.");
+  }
+
+  @override
+  void visitExpressionStmt(Stmt.Expression stmt) {
+    _evaluate(stmt.expression);
+  }
+
+  @override
+  void visitPrintStmt(Stmt.Print stmt) {
+    Object? value = _evaluate(stmt.expression);
+    print(_stringify(value));
+  }
+
+  @override
+  void visitVarStmt(Stmt.Var stmt) {
+    Object? value = null;
+    var initializer = stmt.initializer;
+    if (initializer != null) {
+      value = _evaluate(initializer);
+    }
+
+    _environment.define(stmt.name.lexeme, value);
+  }
+
+  @override
+  Object? visitVariableExpr(Expr.Variable expr) {
+    return _environment.get(expr.name);
   }
 }

@@ -1,3 +1,5 @@
+// AUTO - GENERATED FILE !!!
+
 import 'Token.dart';
 
 abstract class Expr {
@@ -10,6 +12,7 @@ abstract class Visitor<R> {
   R visitLiteralExpr(Literal expr);
   R visitUnaryExpr(Unary expr);
   R visitTernaryExpr(Ternary expr);
+  R visitVariableExpr(Variable expr);
 }
 class Binary extends Expr {
   final Expr left;
@@ -66,3 +69,15 @@ class Ternary extends Expr {
     return visitor.visitTernaryExpr(this);
   }
 }
+class Variable extends Expr {
+  final Token name;
+
+  Variable(this.name, );
+
+  @override
+  R accept<R>(Visitor<R> visitor) {
+    return visitor.visitVariableExpr(this);
+  }
+}
+
+

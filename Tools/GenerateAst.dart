@@ -24,13 +24,30 @@ class GenerateAst {
           "Literal  : Object? value",
           "Unary    : Token operator, Expr right",
           "Ternary  : Expr condition, Expr left, Expr right",
-        ]));
+          "Variable : Token name"
+        ]),
+        ["Token"]);
+
+    _defineAst(
+        outputDir,
+        "Stmt",
+        List.of(
+          [
+            "Expression : Expr expression",
+            "Print      : Expr expression",
+            "Var        : Token name, Expr? initializer"
+          ],
+        ),
+        ["Expr", "Token"]);
   }
 
-  void _defineAst(String outputDir, String baseName, List<String> types) {
+  void _defineAst(String outputDir, String baseName, List<String> types,
+      List<String> imports) {
+    contents = "// AUTO - GENERATED FILE !!!\n\n";
     String path = "$outputDir/$baseName.dart";
     File file = File(path);
-    contents += "import 'Token.dart';\n\n";
+
+    contents += imports.map((i) => "import '$i.dart';").join("\n") + "\n\n";
     _defineBaseClass(baseName);
 
     _defineVisitor(baseName, types);
@@ -41,6 +58,7 @@ class GenerateAst {
       _defineType(baseName, className, fields);
     }
 
+    contents += "\n\n";
     file.writeAsStringSync(contents);
     contents = "";
   }

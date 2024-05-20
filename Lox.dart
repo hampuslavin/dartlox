@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'AstPrinter.dart';
 import 'Expr.dart';
 import 'Interpreter.dart';
 import 'Parser.dart';
 import 'RuntimeError.dart';
 import 'Scanner/Scanner.dart';
+import 'Stmt.dart';
 import 'Token.dart';
 import 'TokenType.dart';
 
@@ -56,12 +56,12 @@ class Lox {
     List<Token> tokens = scanner.scanTokens();
 
     Parser parser = new Parser(tokens);
-    Expr? expression = parser.parse();
+    List<Stmt> statements = parser.parse();
 
     // Stop if there was a syntax error.
-    if (hadError || expression == null) return;
+    if (hadError) return;
 
-    _interpreter.interpret(expression);
+    _interpreter.interpret(statements);
   }
 
   static error(int line, String message) {

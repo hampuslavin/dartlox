@@ -1,5 +1,6 @@
 import "Expr.dart";
 import "Lox.dart";
+import "Stmt.dart" as Stmt;
 import "Token.dart";
 import "TokenType.dart";
 
@@ -11,12 +12,58 @@ class Parser {
 
   Parser(this._tokens) {}
 
-  Expr? parse() {
+  List<Stmt.Stmt> parse() {
+    List<Stmt.Stmt> statements = [];
+
+    while (!_isAtEnd()) {
+      final declaration = _declaration();
+      if (declaration != null) {
+        statements.add(declaration);
+      }
+    }
+
+    return statements;
+  }
+
+  Stmt.Stmt? _declaration() {
     try {
-      return _expression();
+      if (_match([TokenType.VAR])) return _varDeclaration();
+
+      return _statement();
     } on ParseError {
+      _synchronize();
       return null;
     }
+  }
+
+  Stmt.Stmt _varDeclaration() {
+    Token name = _consume(TokenType.IDENTIFIER, "Expect variable name.");
+
+    Expr? initializer = null;
+
+    if (_match([TokenType.EQUAL])) {
+      initializer = _expression();
+    }
+
+    _consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+    return Stmt.Var(name, initializer);
+  }
+
+  Stmt.Stmt _statement() {
+    if (_match([TokenType.PRINT])) return _printStatement();
+    return _expressionStatement();
+  }
+
+  Stmt.Stmt _printStatement() {
+    Expr value = _expression();
+    _consume(TokenType.SEMICOLON, "Expect ';' after value.");
+    return new Stmt.Print(value);
+  }
+
+  Stmt.Stmt _expressionStatement() {
+    Expr expression = _expression();
+    _consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+    return Stmt.Expression(expression);
   }
 
   Expr _expression() {
@@ -114,6 +161,10 @@ class Parser {
 
     if (_match([TokenType.NUMBER, TokenType.STRING])) {
       return Literal(_previous().literal);
+    }
+
+    if (_match([TokenType.IDENTIFIER])) {
+      return Variable(_previous());
     }
 
     if (_match([TokenType.LEFT_PAREN])) {
