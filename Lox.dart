@@ -2,14 +2,18 @@ import 'dart:io';
 
 import 'AstPrinter.dart';
 import 'Expr.dart';
+import 'Interpreter.dart';
 import 'Parser.dart';
+import 'RuntimeError.dart';
 import 'Scanner/Scanner.dart';
 import 'Token.dart';
 import 'TokenType.dart';
 
 class Lox {
   static bool hadError = false;
+  static bool _hadRuntimeError = false;
   static List<String> _history = [];
+  static final Interpreter _interpreter = new Interpreter();
 
   static main(List<String> args) {
     if (args.length > 1) {
@@ -22,12 +26,18 @@ class Lox {
     }
   }
 
+  static runtimeError(RuntimeError error) {
+    print("${error.message} \n[line ${error.token.line}]");
+    _hadRuntimeError = true;
+  }
+
   static _runFile(String path) {
     var file = File(path);
     var source = file.readAsStringSync();
     _run(source);
 
     if (hadError) exit(65);
+    if (_hadRuntimeError) exit(70);
   }
 
   static _runPrompt() {
@@ -51,7 +61,7 @@ class Lox {
     // Stop if there was a syntax error.
     if (hadError || expression == null) return;
 
-    print(AstPrinter().print(expression));
+    _interpreter.interpret(expression);
   }
 
   static error(int line, String message) {
