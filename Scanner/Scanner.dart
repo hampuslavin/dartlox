@@ -73,6 +73,10 @@ class Scanner {
         break;
       case '*':
         _addToken(TokenType.STAR);
+      case '?':
+        _addToken(TokenType.QUESTION_MARK);
+      case ':':
+        _addToken(TokenType.COLON);
         break;
       case '!':
         _addToken(_match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
