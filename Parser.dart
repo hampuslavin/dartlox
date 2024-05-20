@@ -12,14 +12,12 @@ class Parser {
 
   Parser(this._tokens) {}
 
-  List<Stmt.Stmt> parse() {
-    List<Stmt.Stmt> statements = [];
+  List<Stmt.Stmt?> parse() {
+    List<Stmt.Stmt?> statements = [];
 
     while (!_isAtEnd()) {
       final declaration = _declaration();
-      if (declaration != null) {
-        statements.add(declaration);
-      }
+      statements.add(declaration);
     }
 
     return statements;
@@ -51,6 +49,7 @@ class Parser {
 
   Stmt.Stmt _statement() {
     if (_match([TokenType.PRINT])) return _printStatement();
+    if (_match([TokenType.LEFT_BRACE])) return Stmt.Block(_block());
     return _expressionStatement();
   }
 
@@ -262,5 +261,16 @@ class Parser {
 
       _advance();
     }
+  }
+
+  List<Stmt.Stmt?> _block() {
+    List<Stmt.Stmt?> statements = [];
+    while (!_check(TokenType.RIGHT_BRACE) && !_isAtEnd()) {
+      statements.add(_declaration());
+    }
+
+    _consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+
+    return statements;
   }
 }

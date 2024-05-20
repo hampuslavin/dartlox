@@ -7,7 +7,7 @@ import 'Token.dart';
 import 'TokenType.dart';
 
 class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
-  Environment _environment = new Environment();
+  Environment _environment = new Environment(null);
 
   Object? interpret(List<Stmt.Stmt> statements) {
     try {
@@ -187,5 +187,23 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
     _environment.assign(expr.name, value);
 
     return value;
+  }
+
+  @override
+  void visitBlockStmt(Stmt.Block stmt) {
+    _executeBlock(stmt.statements, new Environment(_environment));
+  }
+
+  void _executeBlock(List<Stmt.Stmt?> statements, Environment environment) {
+    Environment previous = this._environment;
+    try {
+      this._environment = environment;
+
+      for (final statement in statements.where((element) => element != null)) {
+        _execute(statement!);
+      }
+    } finally {
+      this._environment = previous;
+    }
   }
 }

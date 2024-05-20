@@ -56,12 +56,14 @@ class Lox {
     List<Token> tokens = scanner.scanTokens();
 
     Parser parser = new Parser(tokens);
-    List<Stmt> statements = parser.parse();
+    List<Stmt?> statements = parser.parse();
 
     // Stop if there was a syntax error.
     if (hadError) return;
 
-    _interpreter.interpret(statements);
+    List<Stmt> valid = statements.map((e) => e as Stmt).toList();
+
+    _interpreter.interpret(valid);
   }
 
   static error(int line, String message) {
