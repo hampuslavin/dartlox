@@ -1,5 +1,8 @@
 import 'Environment.dart';
 import 'Expr.dart' as Expr;
+import 'Globals.dart';
+import 'LoxCallable.dart';
+import 'LoxFunction.dart';
 import 'NilType.dart';
 import 'Stmt.dart' as Stmt;
 import 'Lox.dart';
@@ -10,7 +13,14 @@ import 'TokenType.dart';
 class Uninitialized extends Object {}
 
 class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
-  Environment _environment = new Environment(null);
+  Environment globals;
+  late Environment _environment;
+
+  Interpreter() : globals = new Environment(null) {
+    _environment = globals;
+
+    globals.define("clock", ClockCallable());
+  }
 
   Object? interpret(List<Stmt.Stmt> statements, {bool isRepl = false}) {
     try {
@@ -207,10 +217,10 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
   @override
   void visitBlockStmt(Stmt.Block stmt) {
-    _executeBlock(stmt.statements, new Environment(_environment));
+    executeBlock(stmt.statements, new Environment(_environment));
   }
 
-  void _executeBlock(List<Stmt.Stmt?> statements, Environment environment) {
+  void executeBlock(List<Stmt.Stmt?> statements, Environment environment) {
     Environment previous = this._environment;
     try {
       this._environment = environment;
@@ -265,5 +275,33 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
   @override
   void visitBreakStmt(Stmt.Break stmt) {
     throw new BreakException(stmt.token);
+  }
+
+  @override
+  Object? visitCallExpr(Expr.Call expr) {
+    Object? callee = _evaluate(expr.callee);
+
+    List<Object?> arguments = [];
+    for (final argument in expr.arguments) {
+      arguments.add(_evaluate(argument));
+    }
+
+    if (!(callee is LoxCallable)) {
+      throw new RuntimeError(
+          expr.paren, "Can only call functions and classes.");
+    }
+
+    if (arguments.length != callee.arity()) {
+      throw new RuntimeError(expr.paren,
+          "Expected ${callee.arity()} arguments but got ${arguments.length}.");
+    }
+
+    return callee.call(this, arguments);
+  }
+
+  @override
+  void visitFunction_Stmt(Stmt.Function_ stmt) {
+    LoxFunction function = LoxFunction(stmt);
+    _environment.define(stmt.name.lexeme, function);
   }
 }

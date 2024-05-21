@@ -25,6 +25,7 @@ class Parser {
 
   Stmt.Stmt? _declaration() {
     try {
+      if (_match([TokenType.FUN])) return _function("function");
       if (_match([TokenType.VAR])) return _varDeclaration();
 
       return _statement();
@@ -32,6 +33,26 @@ class Parser {
       _synchronize();
       return null;
     }
+  }
+
+  Stmt.Stmt _function(String kind) {
+    Token name = _consume(TokenType.IDENTIFIER, "Expect $kind name.");
+    _consume(TokenType.LEFT_PAREN, "Expect '(' after $kind name");
+
+    List<Token> parameters = [];
+
+    if (!_check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (parameters.length >= 255) {
+          _error(_peek(), "Can't have more than 255 åarameters");
+        }
+        parameters.add(_consume(TokenType.IDENTIFIER, "Expect parameter name"));
+      } while (_match([TokenType.COMMA]));
+    }
+    _consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+
+    _consume(TokenType.LEFT_BRACE, "Expect '{' before $kind body.");
+    return new Stmt.Function_(name, parameters, [Stmt.Block(_block())]);
   }
 
   Stmt.Stmt _varDeclaration() {
@@ -265,7 +286,20 @@ class Parser {
       return Unary(operator, right);
     }
 
-    return _primary();
+    return _call();
+  }
+
+  Expr _call() {
+    Expr expr = _primary();
+    while (true) {
+      if (_match([TokenType.LEFT_PAREN])) {
+        expr = _finishCall(expr);
+      } else {
+        break;
+      }
+    }
+
+    return expr;
   }
 
   Expr _primary() {
@@ -370,5 +404,21 @@ class Parser {
     _consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
 
     return statements;
+  }
+
+  Expr _finishCall(Expr callee) {
+    List<Expr> arguments = [];
+    if (!_check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (arguments.length >= 255) {
+          _error(_peek(), "Can't have more than 255 arguments.");
+        }
+        arguments.add(_expression());
+      } while (_match([TokenType.COMMA]));
+    }
+    Token paren =
+        _consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.");
+
+    return Call(callee, paren, arguments);
   }
 }

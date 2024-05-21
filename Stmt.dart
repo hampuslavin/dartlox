@@ -10,6 +10,7 @@ abstract class Stmt {
 abstract class Visitor<R> {
   R visitBlockStmt(Block stmt);
   R visitExpressionStmt(Expression stmt);
+  R visitFunction_Stmt(Function_ stmt);
   R visitIfStmt(If stmt);
   R visitPrintStmt(Print stmt);
   R visitVarStmt(Var stmt);
@@ -34,6 +35,18 @@ class Expression extends Stmt {
   @override
   R accept<R>(Visitor<R> visitor) {
     return visitor.visitExpressionStmt(this);
+  }
+}
+class Function_ extends Stmt {
+  final Token name;
+  final List<Token> params;
+  final List<Stmt> body;
+
+  Function_(this.name, this.params, this.body, );
+
+  @override
+  R accept<R>(Visitor<R> visitor) {
+    return visitor.visitFunction_Stmt(this);
   }
 }
 class If extends Stmt {
