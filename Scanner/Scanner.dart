@@ -117,7 +117,7 @@ class Scanner {
         } else if (_isAlpha(c)) {
           _identifier();
         } else {
-          Lox.error(_line, "Unexpected character.");
+          Lox.error(_line, "Unexpected character: $c");
         }
         break;
     }
@@ -169,7 +169,7 @@ class Scanner {
   }
 
   String _peek() {
-    if (_isAtEnd()) return '\0';
+    if (_isAtEnd()) return '\x00';
     return _source[_current];
   }
 
@@ -193,7 +193,7 @@ class Scanner {
   }
 
   bool _isDigit(String c) {
-    return c.compareTo('0') >= 0 && c.compareTo('9') <= 0 && c != '\0';
+    return c.compareTo('0') >= 0 && c.compareTo('9') <= 0 && c != '\x00';
   }
 
   void _number() {
@@ -210,7 +210,7 @@ class Scanner {
   }
 
   String _peekNext() {
-    if (_current + 1 >= _source.length) return '\0';
+    if (_current + 1 >= _source.length) return '\x00';
 
     return _source[_current + 1];
   }

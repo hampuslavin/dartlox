@@ -48,15 +48,82 @@ class Parser {
   }
 
   Stmt.Stmt _statement() {
+    if (_match([TokenType.FOR])) return _forStatement();
+    if (_match([TokenType.IF])) return _ifStatement();
     if (_match([TokenType.PRINT])) return _printStatement();
+    if (_match([TokenType.WHILE])) return _whileStatement();
     if (_match([TokenType.LEFT_BRACE])) return Stmt.Block(_block());
     return _expressionStatement();
+  }
+
+  Stmt.Stmt _forStatement() {
+    _consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
+
+    Stmt.Stmt? initializer;
+    if (_match([TokenType.SEMICOLON])) {
+      initializer = null;
+    } else if (_match([TokenType.VAR])) {
+      initializer = _varDeclaration();
+    } else {
+      initializer = _expressionStatement();
+    }
+
+    Expr? condition;
+    if (!_check(TokenType.SEMICOLON)) {
+      condition = _expression();
+    }
+    _consume(TokenType.SEMICOLON, "Expect ';' after loop condition");
+
+    Expr? increment;
+    if (!_check(TokenType.RIGHT_PAREN)) {
+      increment = _expression();
+    }
+    _consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses");
+
+    Stmt.Stmt body = _statement();
+
+    if (increment != null) {
+      body = Stmt.Block([body, Stmt.Expression(increment)]);
+    }
+
+    if (condition == null) condition = Literal(true);
+
+    body = Stmt.While(condition, body);
+
+    if (initializer != null) {
+      body = Stmt.Block([initializer, body]);
+    }
+
+    return body;
+  }
+
+  Stmt.Stmt _ifStatement() {
+    _consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
+    Expr condition = _expression();
+    _consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+
+    Stmt.Stmt thenBranch = _statement();
+    Stmt.Stmt? elseBranch = null;
+    if (_match([TokenType.ELSE])) {
+      elseBranch = _statement();
+    }
+
+    return new Stmt.If(condition, thenBranch, elseBranch);
   }
 
   Stmt.Stmt _printStatement() {
     Expr value = _expression();
     _consume(TokenType.SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
+  }
+
+  Stmt.Stmt _whileStatement() {
+    _consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
+    Expr condition = _expression();
+    _consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
+    Stmt.Stmt body = _statement();
+
+    return Stmt.While(condition, body);
   }
 
   Stmt.Stmt _expressionStatement() {
@@ -88,7 +155,7 @@ class Parser {
   }
 
   Expr _ternary() {
-    Expr expression = _equality();
+    Expr expression = _or();
     if (_match([
       TokenType.QUESTION_MARK,
     ])) {
@@ -99,6 +166,29 @@ class Parser {
     }
 
     return expression;
+  }
+
+  Expr _or() {
+    Expr expr = _and();
+    while (_match([TokenType.OR])) {
+      Token operator = _previous();
+      Expr right = _and();
+      expr = Logical(expr, operator, right);
+    }
+
+    return expr;
+  }
+
+  Expr _and() {
+    Expr expr = _equality();
+
+    while (_match([TokenType.AND])) {
+      Token operator = _previous();
+      Expr right = _equality();
+      expr = Logical(expr, operator, right);
+    }
+
+    return expr;
   }
 
   Expr _equality() {

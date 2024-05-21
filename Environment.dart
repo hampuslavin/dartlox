@@ -22,10 +22,14 @@ class Environment {
   }
 
   void assign(Token name, Object? value) {
-    _values.update(name.lexeme, (_) => value, ifAbsent: () {
-      var localEnclosing = enclosing;
-      if (localEnclosing != null) return localEnclosing.assign(name, value);
+    if (_values.containsKey(name.lexeme)) {
+      _values[name.lexeme] = value;
+    } else {
+      var enclosing = this.enclosing;
+      if (enclosing != null) {
+        return enclosing.assign(name, value);
+      }
       throw new RuntimeError(name, "Undefined variable '${name.lexeme}'.");
-    });
+    }
   }
 }

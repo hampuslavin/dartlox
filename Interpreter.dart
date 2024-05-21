@@ -78,8 +78,8 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
               left is double && right is String) {
             return "${_stringify(left)}${_stringify(right)}";
           }
-          throw RuntimeError(
-              expr.operator, "Combination of operands not allowed.");
+          throw RuntimeError(expr.operator,
+              "Combination of operands not allowed ($left, $right)");
         }
       case TokenType.GREATER:
         _checkNumberOperands(expr.operator, left, right);
@@ -221,5 +221,42 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
     } finally {
       this._environment = previous;
     }
+  }
+
+  @override
+  void visitIfStmt(Stmt.If stmt) {
+    if (_isTruthy(stmt.condition)) {
+      _execute(stmt.thenBranch);
+      return;
+    }
+    var elseBranch = stmt.elseBranch;
+    if (elseBranch != null) {
+      _execute(elseBranch);
+      return;
+    }
+
+    return;
+  }
+
+  @override
+  Object? visitLogicalExpr(Expr.Logical expr) {
+    Object? left = _evaluate(expr.left);
+
+    if (expr.operator.type == TokenType.OR) {
+      if (_isTruthy(left)) return left;
+    } else {
+      if (!_isTruthy(left)) return left;
+    }
+
+    return _evaluate(expr.right);
+  }
+
+  @override
+  void visitWhileStmt(Stmt.While stmt) {
+    while (_isTruthy(_evaluate(stmt.condition))) {
+      _execute(stmt.body);
+    }
+
+    return null;
   }
 }
