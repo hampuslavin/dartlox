@@ -4,6 +4,7 @@ import 'Globals.dart';
 import 'LoxCallable.dart';
 import 'LoxFunction.dart';
 import 'NilType.dart';
+import 'Return.dart';
 import 'Stmt.dart' as Stmt;
 import 'Lox.dart';
 import 'RuntimeError.dart';
@@ -34,6 +35,9 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
       }
     } on RuntimeError catch (error) {
       Lox.runtimeError(error);
+    } on BreakException catch (breakStatement) {
+      Lox.runtimeError(RuntimeError(
+          breakStatement.token, "Found 'break' statement outside of loop."));
     }
 
     return null;
@@ -301,7 +305,16 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
   @override
   void visitFunction_Stmt(Stmt.Function_ stmt) {
-    LoxFunction function = LoxFunction(stmt);
+    LoxFunction function = LoxFunction(stmt, _environment);
     _environment.define(stmt.name.lexeme, function);
+  }
+
+  @override
+  void visitReturnStmt(Stmt.Return stmt) {
+    Object? value = null;
+    var statementValue = stmt.value;
+    if (statementValue != null) value = _evaluate(statementValue);
+
+    throw new Return(value);
   }
 }

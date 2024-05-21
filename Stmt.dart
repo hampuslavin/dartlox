@@ -9,13 +9,14 @@ abstract class Stmt {
 
 abstract class Visitor<R> {
   R visitBlockStmt(Block stmt);
+  R visitBreakStmt(Break stmt);
   R visitExpressionStmt(Expression stmt);
   R visitFunction_Stmt(Function_ stmt);
   R visitIfStmt(If stmt);
   R visitPrintStmt(Print stmt);
+  R visitReturnStmt(Return stmt);
   R visitVarStmt(Var stmt);
   R visitWhileStmt(While stmt);
-  R visitBreakStmt(Break stmt);
 }
 class Block extends Stmt {
   final List<Stmt?> statements;
@@ -25,6 +26,16 @@ class Block extends Stmt {
   @override
   R accept<R>(Visitor<R> visitor) {
     return visitor.visitBlockStmt(this);
+  }
+}
+class Break extends Stmt {
+  final Token token;
+
+  Break(this.token, );
+
+  @override
+  R accept<R>(Visitor<R> visitor) {
+    return visitor.visitBreakStmt(this);
   }
 }
 class Expression extends Stmt {
@@ -71,6 +82,17 @@ class Print extends Stmt {
     return visitor.visitPrintStmt(this);
   }
 }
+class Return extends Stmt {
+  final Token keyword;
+  final Expr? value;
+
+  Return(this.keyword, this.value, );
+
+  @override
+  R accept<R>(Visitor<R> visitor) {
+    return visitor.visitReturnStmt(this);
+  }
+}
 class Var extends Stmt {
   final Token name;
   final Expr? initializer;
@@ -91,16 +113,6 @@ class While extends Stmt {
   @override
   R accept<R>(Visitor<R> visitor) {
     return visitor.visitWhileStmt(this);
-  }
-}
-class Break extends Stmt {
-  final Token token;
-
-  Break(this.token, );
-
-  @override
-  R accept<R>(Visitor<R> visitor) {
-    return visitor.visitBreakStmt(this);
   }
 }
 

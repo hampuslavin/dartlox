@@ -37,13 +37,14 @@ class GenerateAst {
         List.of(
           [
             "Block      : List<Stmt?> statements",
+            "Break      : Token token",
             "Expression : Expr expression",
             "Function_   : Token name, List<Token> params, List<Stmt> body",
             "If         : Expr condition, Stmt thenBranch, Stmt? elseBranch",
             "Print      : Expr expression",
+            "Return     : Token keyword, Expr? value",
             "Var        : Token name, Expr? initializer",
             "While      : Expr condition, Stmt body",
-            "Break      : Token token"
           ],
         ),
         ["Expr", "Token"]);
