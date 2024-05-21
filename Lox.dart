@@ -45,13 +45,16 @@ class Lox {
       stdout.write('> ');
       var line = stdin.readLineSync();
       if (line == null) break;
-      _run(line);
+      var result = _run(line);
+      if (result != null) {
+        print(result);
+      }
       _history.add(line);
       hadError = false;
     }
   }
 
-  static _run(String source) {
+  static Object? _run(String source) {
     Scanner scanner = Scanner(source);
     List<Token> tokens = scanner.scanTokens();
 
@@ -59,11 +62,11 @@ class Lox {
     List<Stmt?> statements = parser.parse();
 
     // Stop if there was a syntax error.
-    if (hadError) return;
+    if (hadError) return null;
 
     List<Stmt> valid = statements.map((e) => e as Stmt).toList();
 
-    _interpreter.interpret(valid);
+    return _interpreter.interpret(valid, isRepl: true);
   }
 
   static error(int line, String message) {

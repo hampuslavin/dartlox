@@ -193,7 +193,7 @@ class Scanner {
   }
 
   bool _isDigit(String c) {
-    return c.compareTo('0') >= 0 && c.compareTo('9') <= 0;
+    return c.compareTo('0') >= 0 && c.compareTo('9') <= 0 && c != '\0';
   }
 
   void _number() {

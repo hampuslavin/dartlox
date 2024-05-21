@@ -1,0 +1,1 @@
+class Nil extends Object {}

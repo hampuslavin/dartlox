@@ -1,5 +1,6 @@
 import 'Environment.dart';
 import 'Expr.dart' as Expr;
+import 'NilType.dart';
 import 'Stmt.dart' as Stmt;
 import 'Lox.dart';
 import 'RuntimeError.dart';
@@ -9,22 +10,29 @@ import 'TokenType.dart';
 class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
   Environment _environment = new Environment(null);
 
-  Object? interpret(List<Stmt.Stmt> statements) {
+  Object? interpret(List<Stmt.Stmt> statements, {bool isRepl = false}) {
     try {
+      if (isRepl) {
+        assert(statements.length == 1);
+        var result = _execute(statements[0]);
+        return result == null ? null : _stringify(result);
+      }
       for (final stmt in statements) {
         _execute(stmt);
       }
     } on RuntimeError catch (error) {
       Lox.runtimeError(error);
     }
+
+    return null;
   }
 
-  void _execute(Stmt.Stmt statement) {
-    statement.accept(this);
+  Object? _execute(Stmt.Stmt statement) {
+    return statement.accept(this);
   }
 
   String _stringify(Object? object) {
-    if (object == null) return "nil";
+    if (object == null || object is Nil) return "nil";
 
     if (object is double) {
       String text = object.toString();
@@ -155,8 +163,8 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
   }
 
   @override
-  void visitExpressionStmt(Stmt.Expression stmt) {
-    _evaluate(stmt.expression);
+  Object? visitExpressionStmt(Stmt.Expression stmt) {
+    return _evaluate(stmt.expression);
   }
 
   @override
@@ -186,7 +194,7 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
     Object? value = _evaluate(expr.value);
     _environment.assign(expr.name, value);
 
-    return value;
+    return value ?? Nil();
   }
 
   @override
