@@ -7,6 +7,8 @@ import 'RuntimeError.dart';
 import 'Token.dart';
 import 'TokenType.dart';
 
+class Uninitialized extends Object {}
+
 class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
   Environment _environment = new Environment(null);
 
@@ -181,12 +183,18 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
       value = _evaluate(initializer);
     }
 
-    _environment.define(stmt.name.lexeme, value);
+    _environment.define(stmt.name.lexeme, value ?? Uninitialized());
   }
 
   @override
   Object? visitVariableExpr(Expr.Variable expr) {
-    return _environment.get(expr.name);
+    final value = _environment.get(expr.name);
+    if (value is Uninitialized) {
+      throw RuntimeError(
+          expr.name, "Must initialize a variable before using it.");
+    }
+
+    return value;
   }
 
   @override

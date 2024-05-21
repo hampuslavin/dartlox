@@ -45,7 +45,7 @@ class Lox {
       stdout.write('> ');
       var line = stdin.readLineSync();
       if (line == null) break;
-      var result = _run(line);
+      var result = _run(line, isRepl: true);
       if (result != null) {
         print(result);
       }
@@ -54,7 +54,7 @@ class Lox {
     }
   }
 
-  static Object? _run(String source) {
+  static Object? _run(String source, {isRepl = false}) {
     Scanner scanner = Scanner(source);
     List<Token> tokens = scanner.scanTokens();
 
@@ -66,7 +66,7 @@ class Lox {
 
     List<Stmt> valid = statements.map((e) => e as Stmt).toList();
 
-    return _interpreter.interpret(valid, isRepl: true);
+    return _interpreter.interpret(valid, isRepl: isRepl);
   }
 
   static error(int line, String message) {
