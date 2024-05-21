@@ -14,6 +14,7 @@ abstract class Visitor<R> {
   R visitPrintStmt(Print stmt);
   R visitVarStmt(Var stmt);
   R visitWhileStmt(While stmt);
+  R visitBreakStmt(Break stmt);
 }
 class Block extends Stmt {
   final List<Stmt?> statements;
@@ -77,6 +78,16 @@ class While extends Stmt {
   @override
   R accept<R>(Visitor<R> visitor) {
     return visitor.visitWhileStmt(this);
+  }
+}
+class Break extends Stmt {
+  final Token token;
+
+  Break(this.token, );
+
+  @override
+  R accept<R>(Visitor<R> visitor) {
+    return visitor.visitBreakStmt(this);
   }
 }
 

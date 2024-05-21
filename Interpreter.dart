@@ -142,7 +142,7 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
   bool _isTruthy(Object? object) {
     if (object == null) return false;
-    if (object is bool) return !!object;
+    if (object is bool) return object;
 
     return true;
   }
@@ -225,7 +225,7 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
   @override
   void visitIfStmt(Stmt.If stmt) {
-    if (_isTruthy(stmt.condition)) {
+    if (_isTruthy(_evaluate(stmt.condition))) {
       _execute(stmt.thenBranch);
       return;
     }
@@ -253,10 +253,17 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
   @override
   void visitWhileStmt(Stmt.While stmt) {
-    while (_isTruthy(_evaluate(stmt.condition))) {
-      _execute(stmt.body);
-    }
+    try {
+      while (_isTruthy(_evaluate(stmt.condition))) {
+        _execute(stmt.body);
+      }
+    } on BreakException {}
 
     return null;
+  }
+
+  @override
+  void visitBreakStmt(Stmt.Break stmt) {
+    throw new BreakException(stmt.token);
   }
 }

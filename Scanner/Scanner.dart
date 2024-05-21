@@ -5,6 +5,7 @@ import '../TokenType.dart';
 class Scanner {
   static final Map<String, TokenType> keywords = {
     'and': TokenType.AND,
+    'break': TokenType.BREAK,
     'class': TokenType.CLASS,
     'else': TokenType.ELSE,
     'false': TokenType.FALSE,

@@ -48,12 +48,19 @@ class Parser {
   }
 
   Stmt.Stmt _statement() {
+    if (_match([TokenType.BREAK])) return _breakStatement();
     if (_match([TokenType.FOR])) return _forStatement();
     if (_match([TokenType.IF])) return _ifStatement();
     if (_match([TokenType.PRINT])) return _printStatement();
     if (_match([TokenType.WHILE])) return _whileStatement();
     if (_match([TokenType.LEFT_BRACE])) return Stmt.Block(_block());
     return _expressionStatement();
+  }
+
+  Stmt.Stmt _breakStatement() {
+    final token = _previous();
+    _consume(TokenType.SEMICOLON, "Expect ';' after 'break' statement.");
+    return new Stmt.Break(token);
   }
 
   Stmt.Stmt _forStatement() {
@@ -344,6 +351,7 @@ class Parser {
         case TokenType.WHILE:
         case TokenType.PRINT:
         case TokenType.RETURN:
+        case TokenType.BREAK:
           return;
         default:
           break;
