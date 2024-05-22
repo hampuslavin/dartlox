@@ -43,7 +43,7 @@ class Binary extends Expr {
 class Call extends Expr {
   final Expr callee;
   final Token paren;
-  final List<Expr> arguments;
+  final List<Object> arguments;
 
   Call(this.callee, this.paren, this.arguments, );
 

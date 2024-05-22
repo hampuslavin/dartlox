@@ -49,7 +49,7 @@ class Expression extends Stmt {
   }
 }
 class Function_ extends Stmt {
-  final Token name;
+  final Token? name;
   final List<Token> params;
   final List<Stmt> body;
 

@@ -287,7 +287,13 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
     List<Object?> arguments = [];
     for (final argument in expr.arguments) {
-      arguments.add(_evaluate(argument));
+      if (argument is Stmt.Function_) {
+        arguments.add(LoxFunction(argument, _environment));
+      } else if (argument is Expr.Expr) {
+        arguments.add(_evaluate(argument));
+      } else {
+        assert(false);
+      }
     }
 
     if (!(callee is LoxCallable)) {
@@ -305,8 +311,11 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
   @override
   void visitFunction_Stmt(Stmt.Function_ stmt) {
+    var lexeme = stmt.name?.lexeme;
+    if (lexeme == null) return; // Anonymous function
+
     LoxFunction function = LoxFunction(stmt, _environment);
-    _environment.define(stmt.name.lexeme, function);
+    _environment.define(lexeme, function);
   }
 
   @override

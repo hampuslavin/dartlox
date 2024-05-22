@@ -32,6 +32,6 @@ class LoxFunction implements LoxCallable {
 
   @override
   String toString() {
-    return "<fn ${_declaration.name.lexeme}>";
+    return "<fn ${_declaration.name?.lexeme ?? 'anonymous function'}>";
   }
 }

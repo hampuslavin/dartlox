@@ -36,8 +36,14 @@ class Parser {
   }
 
   Stmt.Stmt _function(String kind) {
-    Token name = _consume(TokenType.IDENTIFIER, "Expect $kind name.");
-    _consume(TokenType.LEFT_PAREN, "Expect '(' after $kind name");
+    Token? name = null;
+    bool isAnonymousFunction = _match([TokenType.LEFT_PAREN]);
+    print(">>> isAnon: $isAnonymousFunction");
+
+    if (!isAnonymousFunction) {
+      name = _consume(TokenType.IDENTIFIER, "Expect $kind name.");
+      _consume(TokenType.LEFT_PAREN, "Expect '(' after $kind name");
+    }
 
     List<Token> parameters = [];
 
@@ -52,6 +58,8 @@ class Parser {
     _consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
 
     _consume(TokenType.LEFT_BRACE, "Expect '{' before $kind body.");
+
+    print(">>> Function: $name");
     return new Stmt.Function_(name, parameters, [Stmt.Block(_block())]);
   }
 
@@ -419,13 +427,17 @@ class Parser {
   }
 
   Expr _finishCall(Expr callee) {
-    List<Expr> arguments = [];
+    List<Object> arguments = [];
     if (!_check(TokenType.RIGHT_PAREN)) {
       do {
         if (arguments.length >= 255) {
           _error(_peek(), "Can't have more than 255 arguments.");
         }
-        arguments.add(_expression());
+        if (_match([TokenType.FUN])) {
+          arguments.add(_function("function"));
+        } else {
+          arguments.add(_expression());
+        }
       } while (_match([TokenType.COMMA]));
     }
     Token paren =
