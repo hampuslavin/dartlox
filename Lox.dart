@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'Interpreter.dart';
 import 'Parser.dart';
+import 'Resolver.dart';
 import 'RuntimeError.dart';
 import 'Scanner/Scanner.dart';
 import 'Stmt.dart';
@@ -61,6 +62,11 @@ class Lox {
     List<Stmt?> statements = parser.parse();
 
     // Stop if there was a syntax error.
+    if (hadError) return null;
+
+    Resolver resolver = Resolver(_interpreter);
+    resolver.resolve(statements);
+
     if (hadError) return null;
 
     List<Stmt> valid = statements.map((e) => e as Stmt).toList();

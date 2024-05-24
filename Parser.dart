@@ -38,7 +38,6 @@ class Parser {
   Stmt.Stmt _function(String kind) {
     Token? name = null;
     bool isAnonymousFunction = _match([TokenType.LEFT_PAREN]);
-    print(">>> isAnon: $isAnonymousFunction");
 
     if (!isAnonymousFunction) {
       name = _consume(TokenType.IDENTIFIER, "Expect $kind name.");
@@ -59,7 +58,6 @@ class Parser {
 
     _consume(TokenType.LEFT_BRACE, "Expect '{' before $kind body.");
 
-    print(">>> Function: $name");
     return new Stmt.Function_(name, parameters, [Stmt.Block(_block())]);
   }
 

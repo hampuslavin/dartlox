@@ -16,8 +16,11 @@ class Uninitialized extends Object {}
 class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
   Environment globals;
   late Environment _environment;
+  Map<Expr.Expr, int> _locals;
 
-  Interpreter() : globals = new Environment(null) {
+  Interpreter()
+      : globals = new Environment(null),
+        _locals = Map() {
     _environment = globals;
 
     globals.define("clock", ClockCallable());
@@ -202,19 +205,20 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
 
   @override
   Object? visitVariableExpr(Expr.Variable expr) {
-    final value = _environment.get(expr.name);
-    if (value is Uninitialized) {
-      throw RuntimeError(
-          expr.name, "Must initialize a variable before using it.");
-    }
-
-    return value;
+    return _lookUpVariable(expr.name, expr);
   }
 
   @override
   Object? visitAssignExpr(Expr.Assign expr) {
     Object? value = _evaluate(expr.value);
-    _environment.assign(expr.name, value);
+
+    final distance = _locals[expr];
+
+    if (distance != null) {
+      _environment.assignAt(distance, expr.name, value);
+    } else {
+      globals.assign(expr.name, value);
+    }
 
     return value ?? Nil();
   }
@@ -325,5 +329,22 @@ class Interpreter implements Expr.Visitor<Object?>, Stmt.Visitor<void> {
     if (statementValue != null) value = _evaluate(statementValue);
 
     throw new Return(value);
+  }
+
+  void resolve(Expr.Expr expr, int depth) {
+    _locals[expr] = depth;
+  }
+
+  Object? _lookUpVariable(Token name, Expr.Variable expr) {
+    final distance = _locals[expr];
+    if (distance != null) {
+      return _environment.getAt(distance, name.lexeme);
+    }
+    final value = globals.get(name);
+    if (value is Uninitialized) {
+      throw RuntimeError(
+          expr.name, "Must initialize a variable before using it.");
+    }
+    return value;
   }
 }
